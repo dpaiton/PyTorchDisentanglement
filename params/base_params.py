@@ -5,6 +5,5 @@ import torch
 
 class BaseParams(object):
     def __init__(self):
-        pass
-
-
+        self.dtype = torch.float
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

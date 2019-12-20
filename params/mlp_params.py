@@ -25,4 +25,3 @@ class params(BaseParams):
     def compute_helper_params(self):
         self.optimizer.milestones = [frac * self.num_epochs
             for frac in self.optimizer.lr_annealing_milestone_frac]
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

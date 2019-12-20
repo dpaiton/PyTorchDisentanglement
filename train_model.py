@@ -13,7 +13,7 @@ from params.lca_params import params as lca_params
 model_type = "lca"
 
 # Load params
-if( model_type == "mlp"):
+if(model_type == "mlp"):
     params = mlp_params()
 else:
     params = lca_params()
@@ -57,7 +57,6 @@ scheduler = torch.optim.lr_scheduler.MultiStepLR(
 
 # Define train & test functions
 def train(epoch, params):
-    scheduler.step(epoch)
     model.train()
     epoch_size = len(train_loader.dataset)
     num_batches = epoch_size / params.batch_size
@@ -70,7 +69,7 @@ def train(epoch, params):
           loss = model.loss(dict(zip(["prediction", "target"], [output, target])))
         else:
           recon, latents = model(data) # forward pass
-          loss_dict = dict(zip(["data", "reconstruction", "latents"], [data, recon, latents]))
+          loss_dict = dict(zip(["reconstruction", "latents"], [recon, latents]))
           loss = model.loss(loss_dict)
         loss.backward() # backward pass
         optimizer.step()
@@ -91,13 +90,14 @@ def train(epoch, params):
                     ))
         else:
             if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
-                print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}%".format(
+                print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100. * batch_idx / len(train_loader),
                     loss.item()
                     ))
+    scheduler.step(epoch)
 
 
 def test():

@@ -6,7 +6,7 @@ def lca_threshold(u_in, thresh_type, rectify, sparse_threshold):
     if thresh_type == "soft":
         if rectify:
             a_out = torch.where(torch.gt(u_in, sparse_threshold), u_in - sparse_threshold,
-                torch.zerors_like(u_in))
+                torch.zeros_like(u_in))
         else:
             a_out = torch.where(torch.ge(u_in, sparse_threshold), u_in - sparse_threshold,
                 torch.where(torch.le(u_in, -sparse_threshold), u_in + sparse_threshold,
