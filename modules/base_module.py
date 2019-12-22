@@ -77,3 +77,6 @@ class BaseModule(nn.Module):
         else:
             dump_obj = self.params.__dict__
         self.logger.log_params(dump_obj)
+
+    def setup_model(self):
+        raise NotImplementedError

@@ -9,10 +9,16 @@ class Mlp(BaseModule):
     def __init__(self):
         super(Mlp, self).__init__()
 
-    def setup_model():
-        self.fc1 = nn.Linear(in_features = 28*28, out_features = params.num_latent, bias = True)
-        self.fc2 = nn.Linear(in_features = params.num_latent, out_features = 10, bias = True)
-        self.dropout = nn.Dropout(p=params.dropout_rate)
+    def setup_model(self):
+        self.fc1 = nn.Linear(
+            in_features = self.params.num_pixels,
+            out_features = self.params.num_latent,
+            bias = True)
+        self.fc2 = nn.Linear(
+            in_features = self.params.num_latent,
+            out_features = 10,
+            bias = True)
+        self.dropout = nn.Dropout(p=self.params.dropout_rate)
 
     def loss(self, dictargs):
         return F.nll_loss(dictargs["prediction"], dictargs["target"])
