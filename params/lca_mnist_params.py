@@ -6,8 +6,11 @@ import torch
 from params.base_params import BaseParams
 
 class params(BaseParams):
-    def __init__(self):
-        super(params, self).__init__()
+    def set_params(self):
+        super(params, self).set_params()
+        self.model_type = "lca"
+        self.model_name = "lca_mnist"
+        self.version = "0.0"
         self.batch_size = 50
         self.num_epochs = 50
         self.weight_lr = 1e-4
@@ -29,6 +32,7 @@ class params(BaseParams):
         self.compute_helper_params()
 
     def compute_helper_params(self):
+        super(params, self).compute_helper_params()
         self.optimizer.milestones = [frac * self.num_epochs
             for frac in self.optimizer.lr_annealing_milestone_frac]
         self.step_size = self.dt / self.tau

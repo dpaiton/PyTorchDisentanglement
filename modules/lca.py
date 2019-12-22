@@ -2,18 +2,17 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-#from torch.nn.parameter import Parameter
 
+from modules.base_module import BaseModule
 from modules.activations import lca_threshold
 
-class LcaModel(nn.Module):
-    def __init__(self, params):
-        super(LcaModel, self).__init__()
-        self.params = params
-        self.params.input_size = 28*28
+class Lca(BaseModule):
+    def __init__(self):
+        super(Lca, self).__init__()
 
-        self.w = nn.Parameter(torch.randn(self.params.input_size, self.params.num_latent))
-        self.w.requirs_grad = True
+    def setup_model():
+        self.w = nn.Parameter(torch.randn(self.params.num_pixels, self.params.num_latent),
+            requires_grad=True)
 
     def compute_excitatory_current(self):
         return torch.matmul(self.data_tensor, self.w)
@@ -21,7 +20,7 @@ class LcaModel(nn.Module):
     def compute_inhibitory_connectivity(self):
         lca_g = torch.matmul(torch.transpose(self.w, dim0=0, dim1=1),
             self.w) - torch.eye(self.params.num_latent,
-            requires_grad=True)
+            requires_grad=True, device=self.params.device)
         return lca_g
 
     def threshold_units(self, u_in):
@@ -38,7 +37,8 @@ class LcaModel(nn.Module):
     def infer_coefficients(self):
         lca_b = self.compute_excitatory_current()
         lca_g = self.compute_inhibitory_connectivity()
-        u_list = [torch.zeros([self.data_tensor.shape[0], self.params.num_latent])]
+        u_list = [torch.zeros([self.data_tensor.shape[0], self.params.num_latent],
+          device=self.params.device)]
         a_list = [self.threshold_units(u_list[0])]
         for step in range(self.params.num_steps-1):
             u = self.step_inference(u_list[step], a_list[step], lca_b, lca_g, step)[0]
@@ -53,10 +53,11 @@ class LcaModel(nn.Module):
         data_reduc_dim = list(range(1, len(self.data_tensor.shape)))
         latent_reduc_dim = list(range(1, len(dictargs["latents"].shape)))
         mse = torch.pow(self.data_tensor - dictargs["reconstruction"], 2.)
-        recon_loss = torch.mean(torch.sum(0.5 * mse, dim=data_reduc_dim, keepdim=False))
-        sparse_loss = torch.mean(torch.sum(torch.abs(dictargs["latents"]),
+        self.recon_loss = torch.mean(torch.sum(0.5 * mse, dim=data_reduc_dim, keepdim=False))
+        self.sparse_loss = self.params.sparse_mult * torch.mean(torch.sum(torch.abs(dictargs["latents"]),
             dim=latent_reduc_dim, keepdim=False))
-        return recon_loss + self.params.sparse_mult * sparse_loss
+        self.total_loss = self.recon_loss + self.sparse_loss
+        return self.total_loss
 
     def forward(self, x):
         x = x.view(-1, 28 * 28)

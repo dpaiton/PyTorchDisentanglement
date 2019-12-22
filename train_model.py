@@ -1,24 +1,29 @@
+import os
 import numpy as np
+import argparse
+import time as ti
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 
-from models.mlp_model import MlpModel as mlp
-from models.lca_model import LcaModel as lca
+import params.param_loader as pl
+import modules.module_loader as ml
 
-from params.mlp_params import params as mlp_params
-from params.lca_params import params as lca_params
+parser = argparse.ArgumentParser()
+parser.add_argument("param_file", help="Path to the parameter file")
 
-model_type = "lca"
+args = parser.parse_args()
+param_file = args.param_file
+
+t0 = ti.time()
 
 # Load params
-if(model_type == "mlp"):
-    params = mlp_params()
-else:
-    params = lca_params()
+params = pl.load_param_file(param_file)
 
 # Load dataset
+params.data_shape = [28, 28, 1]
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST(root='../Datasets/', train=True, download=True,
     transform=transforms.Compose([
@@ -34,10 +39,8 @@ test_loader = torch.utils.data.DataLoader(
     batch_size=params.batch_size, shuffle=True, num_workers=0, pin_memory=False)
 
 # Load model
-if(model_type == "mlp"):
-  model = mlp(params).to(params.device)
-else:
-  model = lca(params).to(params.device)
+model = ml.load_model(params.model_type)
+model.setup(params)#.to(params.device)
 
 # Setup optimizer
 if(params.optimizer.name == "sgd"):
@@ -55,6 +58,7 @@ scheduler = torch.optim.lr_scheduler.MultiStepLR(
     milestones=params.optimizer.milestones,
     gamma=params.optimizer.lr_decay_rate)
 
+
 # Define train & test functions
 def train(epoch, params):
     model.train()
@@ -64,7 +68,7 @@ def train(epoch, params):
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(params.device), target.to(params.device)
         optimizer.zero_grad() # clear gradietns of all optimized variables
-        if(model_type == "mlp"):
+        if(params.model_type == "mlp"):
           output = model(data) # forward pass
           loss = model.loss(dict(zip(["prediction", "target"], [output, target])))
         else:
@@ -73,10 +77,10 @@ def train(epoch, params):
           loss = model.loss(loss_dict)
         loss.backward() # backward pass
         optimizer.step()
-        if(model_type == "lca"):
+        if(params.model_type == "lca"):
             with torch.no_grad():
                 model.w.div_(torch.norm(model.w, dim=0, keepdim=True))
-        if(model_type == "mlp"):
+        if(params.model_type == "mlp"):
             pred = output.max(1, keepdim=True)[1]
             correct += pred.eq(target.view_as(pred)).sum().item()
             if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
@@ -90,12 +94,15 @@ def train(epoch, params):
                     ))
         else:
             if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
-                print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
+                print(
+                    "Train Epoch: {} [{}/{} ({:.0f}%)]\tTotal Loss: {:.6f}\tRecon Loss: {:.6f}\tSparse Loss: {:.6f}".format(
                     epoch,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100. * batch_idx / len(train_loader),
-                    loss.item()
+                    loss.item(),
+                    model.recon_loss.item(),
+                    model.sparse_loss.item()
                     ))
     scheduler.step(epoch)
 
@@ -117,7 +124,16 @@ def test():
               .format(test_loss, correct, len(test_loader.dataset),
               100. * correct / len(test_loader.dataset)))
 
+
 # train model
 for epoch in range(1, params.num_epochs+1):
     train(epoch, params)
-    test()
+    if(params.model_type == "mlp"):
+        test()
+
+
+PATH = model.cp_save_dir#"../Projects/"+params.model_type+"/savefiles/"
+if not os.path.exists(PATH):
+    os.makedirs(PATH)
+SAVEFILE = PATH + "trained_model.pt"
+torch.save(model.state_dict(), SAVEFILE)

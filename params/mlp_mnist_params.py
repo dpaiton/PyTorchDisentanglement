@@ -6,12 +6,11 @@ import torch
 from params.base_params import BaseParams
 
 class params(BaseParams):
-    def __init__(self):
-        super(params, self).__init__()
-        self.set_params()
-        self.compute_helper_params()
-
     def set_params(self):
+        super(params, self).set_params()
+        self.model_type = "mlp"
+        self.model_name = "mlp_mnist"
+        self.version = "0.0"
         self.batch_size = 50
         self.num_epochs = 100
         self.weight_lr = 5e-4
@@ -24,7 +23,7 @@ class params(BaseParams):
         self.optimizer.lr_decay_rate = 0.1
         self.num_latent = (28*28)*4#(28*28)*6
 
-
     def compute_helper_params(self):
+        super(params, self).compute_helper_params()
         self.optimizer.milestones = [frac * self.num_epochs
             for frac in self.optimizer.lr_annealing_milestone_frac]
