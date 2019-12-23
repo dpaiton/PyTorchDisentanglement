@@ -83,49 +83,19 @@ def train(epoch, params):
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(params.device), target.to(params.device)
         optimizer.zero_grad() # clear gradietns of all optimized variables
-        #if(params.model_type == "mlp"):
-        #  #output = model(data) # forward pass
-        #  loss = model.loss(dict(zip(["prediction", "target"], [model(data), target])))
-        #else:
-        #  recon, latents = model(data) # forward pass
-        #  loss_dict = dict(zip(["reconstruction", "latents"], [recon, latents]))
-        #  loss = model.loss(loss_dict)
         loss = model.get_total_loss((data, target))
         loss.backward() # backward pass
         optimizer.step()
-        if(params.model_type == "lca"):
+        if(hasattr(params, "renormalize_weights") and params.renormalize_weights):
             with torch.no_grad():
                 model.w.div_(torch.norm(model.w, dim=0, keepdim=True))
-        batch_step = epoch * model.params.batches_per_epoch + batch_idx
-        model.print_update(input_data=data, input_labels=target, batch_step=batch_step)
-        #if(params.model_type == "mlp"):
-        #    #pred = output.max(1, keepdim=True)[1]
-        #    #correct += pred.eq(target.view_as(pred)).sum().item()
-        #    if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
-        #        #print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tTrain Accuracy: {:.1f}%".format(
-        #        #    epoch,
-        #        #    batch_idx * len(data),
-        #        #    len(train_loader.dataset),
-        #        #    100. * batch_idx / len(train_loader),
-        #        #    loss.item(),
-        #        #    100. * correct / ((batch_idx+1) * len(data))
-        #        #    ))
-        #else:
-        #    if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
-        #        print(
-        #            "Train Epoch: {} [{}/{} ({:.0f}%)]\tTotal Loss: {:.6f}\tRecon Loss: {:.6f}\tSparse Loss: {:.6f}".format(
-        #            epoch,
-        #            batch_idx * len(data),
-        #            len(train_loader.dataset),
-        #            100. * batch_idx / len(train_loader),
-        #            loss.item(),
-        #            model.recon_loss.item(),
-        #            model.sparse_loss.item()
-        #            ))
+        if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
+            batch_step = epoch * model.params.batches_per_epoch + batch_idx
+            model.print_update(input_data=data, input_labels=target, batch_step=batch_step)
     scheduler.step(epoch)
 
 
-def test():
+def test(epoch):
     with torch.no_grad():
         model.eval()
         test_loss = 0
@@ -136,20 +106,26 @@ def test():
             test_loss += F.nll_loss(output, target, reduction="sum").item()
             pred = output.max(1, keepdim=True)[1]
             correct += pred.eq(target.view_as(pred)).sum().item()
-
         test_loss /= len(test_loader.dataset)
-        print("\nTest set: Average loss: {:.4f}, Test Accuracy: {}/{} ({:.1f}%)\n"
-              .format(test_loss, correct, len(test_loader.dataset),
-              100. * correct / len(test_loader.dataset)))
+        test_accuracy = 100. * correct / len(test_loader.dataset)
+        stat_dict = {
+            "epoch":epoch,
+            "test_loss":test_loss,
+            "test_correct":correct,
+            "test_total":len(test_loader.dataset),
+            "test_accuracy":test_accuracy}
+        js_str = model.js_dumpstring(stat_dict)
+        model.log_info("<stats>"+js_str+"</stats>")
 
-
-# train model
+# Train model
 for epoch in range(1, params.num_epochs+1):
     train(epoch, params)
     if(params.model_type == "mlp"):
-        test()
+        test(epoch)
+    print("Completed epoch %g/%g"%(epoch, params.num_epochs))
 
 
+# Checkpoint model
 PATH = model.cp_save_dir#"../Projects/"+params.model_type+"/savefiles/"
 if not os.path.exists(PATH):
     os.makedirs(PATH)

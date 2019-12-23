@@ -22,6 +22,7 @@ class params(BaseParams):
         self.optimizer.lr_annealing_milestone_frac = [0.8] # fraction of num_epochs
         self.optimizer.lr_decay_rate = 0.1
 
+        self.renormalize_weights = True
         self.dt = 0.001
         self.tau = 0.03
         self.num_steps = 75
