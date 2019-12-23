@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from modules.base_module import BaseModule
+from modules.base import BaseModule
 
 class Mlp(BaseModule):
     def __init__(self):

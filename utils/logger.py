@@ -45,11 +45,6 @@ class Logger(object):
         js_str = self.js_dumpstring(out_params)
         self.log_info("<params>"+js_str+"</params>")
 
-    def log_schedule(self, sched):
-        """Use logging to write current schedule"""
-        js_str = self.js_dumpstring(sched)
-        self.log_info("<schedule>"+js_str+"</schedule>")
-
     def log_info(self, string):
         """Log input string"""
         now = time.localtime(time.time())
@@ -96,18 +91,6 @@ class Logger(object):
               js_matches = [js.loads(matches[0])]
         return js_matches
 
-    def read_trainable_variables(self, text):
-        """
-        Read params from text file and return as a dictionary
-        Outpus:
-            params: converted python object
-        Inputs:
-            text: [str] containing text to parse, can be obtained by calling load_file()
-        """
-        tokens = ["<train_vars>", "</train_vars>"]
-        trainable_var_names = self.read_js(tokens, text)[-1]
-        return trainable_var_names
-
     def read_params(self, text):
         """
         Read params from text file and return as a params object or list of params objects
@@ -125,17 +108,6 @@ class Logger(object):
                   setattr(param_obj, key, val)
             param_list.append(param_obj)
         return param_list
-
-    def read_schedule(self, text):
-        """
-        Read schedule from text file and return as a list of dictionaries
-        Outpus:
-            schedule: converted python object
-        Inputs:
-            text: [str] containing text to parse, can be obtained by calling load_file()
-        """
-        tokens = ["<schedule>", "</schedule>"]
-        return self.read_js(tokens, text)[-1]
 
     def read_stats(self, text):
         """

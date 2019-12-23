@@ -8,6 +8,7 @@ from utils.logger import Logger
 
 class BaseModule(nn.Module):
     def __init__(self):
+        super(BaseModule, self).__init__()
         self.params_loaded = False
 
     def setup(self, params):

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from modules.base_module import BaseModule
+from modules.base import BaseModule
 from modules.activations import lca_threshold
 
 class Lca(BaseModule):

@@ -40,7 +40,7 @@ test_loader = torch.utils.data.DataLoader(
 
 # Load model
 model = ml.load_model(params.model_type)
-model.setup(params)#.to(params.device)
+model.setup(params).to(params.device)
 
 # Setup optimizer
 if(params.optimizer.name == "sgd"):
