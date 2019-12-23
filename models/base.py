@@ -6,9 +6,9 @@ import torch.nn.functional as F
 
 from utils.logger import Logger
 
-class BaseModule(nn.Module):
+class BaseModel(nn.Module):
     def __init__(self):
-        super(BaseModule, self).__init__()
+        super(BaseModel, self).__init__()
         self.params_loaded = False
 
     def setup(self, params):

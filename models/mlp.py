@@ -3,9 +3,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from modules.base import BaseModule
+from models.base import BaseModel
 
-class Mlp(BaseModule):
+class Mlp(BaseModel):
     def __init__(self):
         super(Mlp, self).__init__()
 

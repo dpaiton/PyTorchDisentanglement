@@ -3,14 +3,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from modules.base import BaseModule
+from models.base import BaseModel
 from modules.activations import lca_threshold
 
-class Lca(BaseModule):
+class Lca(BaseModel):
     def __init__(self):
         super(Lca, self).__init__()
 
-    def setup_model():
+    def setup_model(self):
         self.w = nn.Parameter(torch.randn(self.params.num_pixels, self.params.num_latent),
             requires_grad=True)
 

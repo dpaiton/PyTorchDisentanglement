@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms
 
 import params.param_loader as pl
-import modules.module_loader as ml
+import models.model_loader as ml
 
 parser = argparse.ArgumentParser()
 parser.add_argument("param_file", help="Path to the parameter file")
@@ -40,7 +40,8 @@ test_loader = torch.utils.data.DataLoader(
 
 # Load model
 model = ml.load_model(params.model_type)
-model.setup(params).to(params.device)
+model.setup(params)
+model.to(params.device)
 
 # Setup optimizer
 if(params.optimizer.name == "sgd"):
