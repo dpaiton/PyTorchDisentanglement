@@ -11,6 +11,7 @@ class params(BaseParams):
         self.model_type = "mlp"
         self.model_name = "mlp_mnist"
         self.version = "0.0"
+        self.dataset = "mnist"
         self.batch_size = 50
         self.num_epochs = 100
         self.weight_lr = 5e-4

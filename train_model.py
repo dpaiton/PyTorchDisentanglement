@@ -22,21 +22,35 @@ t0 = ti.time()
 # Load params
 params = pl.load_param_file(param_file)
 
-# Load dataset
-params.data_shape = [28, 28, 1]
-train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST(root='../Datasets/', train=True, download=True,
-    transform=transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize(mean=(0.0,), std=(255,))])),
-    batch_size=params.batch_size, shuffle=True, num_workers=0, pin_memory=False)
+def load_dataset(params):
+    if params.dataset.lower() == "mnist":
+        # Load dataset
+        train_loader = torch.utils.data.DataLoader(
+            datasets.MNIST(root='../Datasets/', train=True, download=True,
+            transform=transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.0,), std=(255,)), # rescale to be 0 to 1
+            transforms.Lambda(lambda x: x.permute(1, 2, 0))])), # channels last
+            batch_size=params.batch_size, shuffle=True, num_workers=0, pin_memory=False)
+        val_loader = None
+        test_loader = torch.utils.data.DataLoader(
+            datasets.MNIST(root='../Datasets/', train=False, download=True,
+            transform=transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.0,), std=(255,)), # rescale to be 0 to 1
+            transforms.Lambda(lambda x: x.permute(1, 2, 0))])), # channels last
+            batch_size=params.batch_size, shuffle=True, num_workers=0, pin_memory=False)
+    else:
+        assert False, ("Supported datasets are ['mnist'], not"+dataset_name)
+    params.epoch_size = len(train_loader.dataset)
+    if not hasattr(params, "num_val_images"):
+        params.num_val_images = len(test_loader.dataset)
+    if not hasattr(params, "num_test_images"):
+      params.num_test_images = len(test_loader.dataset)
+    params.data_shape = list(next(iter(train_loader))[0].shape)[1:]
+    return (train_loader, val_loader, test_loader, params)
 
-test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST(root='../Datasets/', train=False, download=True,
-    transform=transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize(mean=(0.0,), std=(255,))])),
-    batch_size=params.batch_size, shuffle=True, num_workers=0, pin_memory=False)
+train_loader, val_loader, test_loader, params = load_dataset(params)
 
 # Load model
 model = ml.load_model(params.model_type)
@@ -69,42 +83,45 @@ def train(epoch, params):
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(params.device), target.to(params.device)
         optimizer.zero_grad() # clear gradietns of all optimized variables
-        if(params.model_type == "mlp"):
-          output = model(data) # forward pass
-          loss = model.loss(dict(zip(["prediction", "target"], [output, target])))
-        else:
-          recon, latents = model(data) # forward pass
-          loss_dict = dict(zip(["reconstruction", "latents"], [recon, latents]))
-          loss = model.loss(loss_dict)
+        #if(params.model_type == "mlp"):
+        #  #output = model(data) # forward pass
+        #  loss = model.loss(dict(zip(["prediction", "target"], [model(data), target])))
+        #else:
+        #  recon, latents = model(data) # forward pass
+        #  loss_dict = dict(zip(["reconstruction", "latents"], [recon, latents]))
+        #  loss = model.loss(loss_dict)
+        loss = model.get_total_loss((data, target))
         loss.backward() # backward pass
         optimizer.step()
         if(params.model_type == "lca"):
             with torch.no_grad():
                 model.w.div_(torch.norm(model.w, dim=0, keepdim=True))
-        if(params.model_type == "mlp"):
-            pred = output.max(1, keepdim=True)[1]
-            correct += pred.eq(target.view_as(pred)).sum().item()
-            if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
-                print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tTrain Accuracy: {:.1f}%".format(
-                    epoch,
-                    batch_idx * len(data),
-                    len(train_loader.dataset),
-                    100. * batch_idx / len(train_loader),
-                    loss.item(),
-                    100. * correct / ((batch_idx+1) * len(data))
-                    ))
-        else:
-            if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
-                print(
-                    "Train Epoch: {} [{}/{} ({:.0f}%)]\tTotal Loss: {:.6f}\tRecon Loss: {:.6f}\tSparse Loss: {:.6f}".format(
-                    epoch,
-                    batch_idx * len(data),
-                    len(train_loader.dataset),
-                    100. * batch_idx / len(train_loader),
-                    loss.item(),
-                    model.recon_loss.item(),
-                    model.sparse_loss.item()
-                    ))
+        batch_step = epoch * model.params.batches_per_epoch + batch_idx
+        model.print_update(input_data=data, input_labels=target, batch_step=batch_step)
+        #if(params.model_type == "mlp"):
+        #    #pred = output.max(1, keepdim=True)[1]
+        #    #correct += pred.eq(target.view_as(pred)).sum().item()
+        #    if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
+        #        #print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tTrain Accuracy: {:.1f}%".format(
+        #        #    epoch,
+        #        #    batch_idx * len(data),
+        #        #    len(train_loader.dataset),
+        #        #    100. * batch_idx / len(train_loader),
+        #        #    loss.item(),
+        #        #    100. * correct / ((batch_idx+1) * len(data))
+        #        #    ))
+        #else:
+        #    if(batch_idx % int(num_batches/params.train_logs_per_epoch) == 0.):
+        #        print(
+        #            "Train Epoch: {} [{}/{} ({:.0f}%)]\tTotal Loss: {:.6f}\tRecon Loss: {:.6f}\tSparse Loss: {:.6f}".format(
+        #            epoch,
+        #            batch_idx * len(data),
+        #            len(train_loader.dataset),
+        #            100. * batch_idx / len(train_loader),
+        #            loss.item(),
+        #            model.recon_loss.item(),
+        #            model.sparse_loss.item()
+        #            ))
     scheduler.step(epoch)
 
 

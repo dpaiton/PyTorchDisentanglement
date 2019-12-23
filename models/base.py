@@ -32,6 +32,8 @@ class BaseModel(nn.Module):
         params.save_dir = params.model_out_dir + "/savefiles/"
         params.disp_dir = params.model_out_dir + "/vis/"
         params.num_pixels = int(np.prod(params.data_shape))
+        params.batches_per_epoch = params.epoch_size / params.batch_size
+        params.num_batches = params.num_epochs * params.batches_per_epoch
         self.params = params
         self.params_loaded = True
 
@@ -79,5 +81,62 @@ class BaseModel(nn.Module):
             dump_obj = self.params.__dict__
         self.logger.log_params(dump_obj)
 
+    def log_info(self, string):
+        """Log input string"""
+        self.logger.log_info(string)
+
+    def write_checkpoint(self, session):
+        """Write checkpoints"""
+        base_save_path = self.params.cp_save_dir+self.params.model_name+"_v"+self.params.version
+        full_save_path = base_save_path+self.params.cp_latest_filename
+        torch.save(self.state_dict(), full_save_path)
+        self.logger.log_info("Full model saved in file %s"%full_save_path)
+        return base_save_path
+
+    def load_checkpoint(self, model_dir):
+        """
+        Load checkpoint model into session.
+        Inputs:
+          model_dir: String specifying the path to the checkpoint
+        """
+        assert self.params.cp_load == True, ("cp_load must be set to true to load a checkpoint")
+        cp_file = model_dir+self.params.cp_latest_filename
+        return torch.load(cp_file)
+
     def setup_model(self):
         raise NotImplementedError
+
+    def get_encodings(self):
+        raise NotImplementedError
+
+    def print_update(self, input_data, input_labels=None, batch_step=0):
+        """
+        Log train progress information
+        Inputs:
+          input_data: data object containing the current image batch
+          input_labels: data object containing the current label batch
+          batch_step: current batch number within the schedule
+        NOTE: For the analysis code to parse update statistics, the self.js_dumpstring() call
+          must receive a dict object. Additionally, the self.js_dumpstring() output must be
+          logged with <stats> </stats> tags.
+          For example: logging.info("<stats>"+self.js_dumpstring(output_dictionary)+"</stats>")
+        """
+        update_dict = self.generate_update_dict(input_data, input_labels, batch_step)
+        js_str = self.js_dumpstring(update_dict)
+        self.log_info("<stats>"+js_str+"</stats>")
+
+    def generate_update_dict(self, input_data, input_labels=None, batch_step=0):
+        """
+        Generates a dictionary to be logged in the print_update function
+        """
+        update_dict = dict()
+        return update_dict
+
+    def generate_plots(self, input_data, input_labels=None):
+        """
+        Plot weights, reconstruction, gradients, etc
+        Inputs:
+          input_data: data object containing the current image batch
+          input_labels: data object containing the current label batch
+        """
+        pass
