@@ -22,6 +22,7 @@ t0 = ti.time()
 # Load params
 params = pl.load_param_file(param_file)
 
+
 def load_dataset(params):
     if params.dataset.lower() == "mnist":
         # Load dataset
@@ -117,13 +118,13 @@ def test(epoch):
         js_str = model.js_dumpstring(stat_dict)
         model.log_info("<stats>"+js_str+"</stats>")
 
+
 # Train model
 for epoch in range(1, params.num_epochs+1):
     train(epoch, params)
     if(params.model_type == "mlp"):
         test(epoch)
     print("Completed epoch %g/%g"%(epoch, params.num_epochs))
-
 
 # Checkpoint model
 PATH = model.params.cp_save_dir#"../Projects/"+params.model_type+"/savefiles/"

@@ -3,19 +3,36 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from modules.activations import activation_picker
 from models.base import BaseModel
 
 class Mlp(BaseModel):
     def setup_model(self):
-        self.fc1 = nn.Linear(
-            in_features = self.params.num_pixels,
-            out_features = self.params.num_latent,
-            bias = True)
-        self.fc2 = nn.Linear(
-            in_features = self.params.num_latent,
-            out_features = 10,
-            bias = True)
-        self.dropout = nn.Dropout(p=self.params.dropout_rate)
+        self.act_funcs = [activation_picker(act_func_str)
+            for act_func_str in self.params.activation_functions]
+        self.layers = []
+        self.dropout = []
+        for layer_index, layer_type in enumerate(self.params.layer_types):
+            if layer_type == "fc":
+                layer = nn.Linear(
+                    in_features = self.params.layer_channels[layer_index],
+                    out_features = self.params.layer_channels[layer_index+1], 
+                    bias = True)
+                self.register_parameter("fc"+str(layer_index)+"_w", layer.weight)
+                self.register_parameter("fc"+str(layer_index)+"_b", layer.bias)
+                self.layers.append(layer)
+            else:
+                assert False, ("layer_type parameter must be 'fc', not %g"%(layer_type))
+            self.dropout.append(nn.Dropout(p=self.params.dropout_rate[layer_index]))
+        #self.fc1 = nn.Linear(
+        #    in_features = self.params.num_pixels,
+        #    out_features = self.params.num_latent,
+        #    bias = True)
+        #self.fc2 = nn.Linear(
+        #    in_features = self.params.num_latent,
+        #    out_features = 10,
+        #    bias = True)
+        #self.dropout = nn.Dropout(p=self.params.dropout_rate)
 
     def get_total_loss(self, input_tuple):
         input_tensor, input_label = input_tuple
@@ -28,8 +45,11 @@ class Mlp(BaseModel):
 
     def forward(self, x):
         x = self.preprocess_data(x)
-        x = self.dropout(F.leaky_relu(self.fc1(x)))
-        x = F.log_softmax(self.fc2(x), dim=1)
+        #x = self.dropout(F.leaky_relu(self.fc1(x)))
+        #x = F.log_softmax(self.fc2(x), dim=1)
+        for dropout, act_func, layer in zip(self.dropout, self.act_funcs, self.layers):
+            x = dropout(act_func(layer(x)))
+        x = F.log_softmax(x, dim=1)
         return x
     
     def get_encodings(self, x):

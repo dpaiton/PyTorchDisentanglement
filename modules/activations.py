@@ -2,6 +2,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+def activation_picker(activation_function):
+    if activation_function == "identity":
+      return lambda x: x
+    if activation_function == "relu":
+      return F.relu
+    if activation_function == "lrelu" or activation_function == "leaky_relu":
+      return F.leaky_relu
+    if activation_function == "lca_threshold":
+      return lca_threshold
+    assert False, ("Activation function " + activation_function + " is not supported!")
+
 def lca_threshold(u_in, thresh_type, rectify, sparse_threshold):
     if thresh_type == "soft":
         if rectify:
