@@ -12,6 +12,7 @@ class params(BaseParams):
         self.model_name = "lca_mnist"
         self.version = "0.0"
         self.dataset = "mnist"
+        self.num_pixels = 784
         self.batch_size = 50
         self.num_epochs = 50
         self.weight_lr = 1e-4
