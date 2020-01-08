@@ -11,12 +11,15 @@ class BaseModel(nn.Module):
         super(BaseModel, self).__init__()
         self.params_loaded = False
 
-    def setup(self, params):
+    def setup(self, params, logger=None):
         self.load_params(params)
-        #self.check_params()
+        self.check_params()
         self.make_dirs()
-        self.init_logging()
-        self.log_params()
+        if logger is None:
+            self.init_logging()
+            self.log_params()
+        else:
+            self.logger = logger
         self.setup_model()
 
     def load_params(self, params):
@@ -36,6 +39,12 @@ class BaseModel(nn.Module):
         params.num_batches = params.num_epochs * params.batches_per_epoch
         self.params = params
         self.params_loaded = True
+
+    def check_params(self):
+        """
+        TODO: Check parameters with assertions
+        """
+        pass
 
     def get_param(self, param_name):
         """
