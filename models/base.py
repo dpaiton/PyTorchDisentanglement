@@ -34,7 +34,6 @@ class BaseModel(nn.Module):
         params.log_dir = params.model_out_dir + "/logfiles/"
         params.save_dir = params.model_out_dir + "/savefiles/"
         params.disp_dir = params.model_out_dir + "/vis/"
-        params.num_pixels = int(np.prod(params.data_shape))
         params.batches_per_epoch = params.epoch_size / params.batch_size
         params.num_batches = params.num_epochs * params.batches_per_epoch
         self.params = params
@@ -42,9 +41,9 @@ class BaseModel(nn.Module):
 
     def check_params(self):
         """
-        TODO: Check parameters with assertions
+        Check parameters with assertions
         """
-        pass
+        assert self.params.num_pixels == int(np.prod(self.params.data_shape))
 
     def get_param(self, param_name):
         """
