@@ -7,9 +7,6 @@ from models.base import BaseModel
 from modules.activations import lca_threshold
 
 class Lca(BaseModel):
-    def __init__(self):
-        super(Lca, self).__init__()
-
     def setup_model(self):
         self.w = nn.Parameter(torch.randn(self.params.num_pixels, self.params.num_latent),
             requires_grad=True)

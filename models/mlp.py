@@ -6,9 +6,6 @@ import torch.nn.functional as F
 from models.base import BaseModel
 
 class Mlp(BaseModel):
-    def __init__(self):
-        super(Mlp, self).__init__()
-
     def setup_model(self):
         self.fc1 = nn.Linear(
             in_features = self.params.num_pixels,
