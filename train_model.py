@@ -126,7 +126,7 @@ for epoch in range(1, params.num_epochs+1):
 
 
 # Checkpoint model
-PATH = model.cp_save_dir#"../Projects/"+params.model_type+"/savefiles/"
+PATH = model.params.cp_save_dir#"../Projects/"+params.model_type+"/savefiles/"
 if not os.path.exists(PATH):
     os.makedirs(PATH)
 SAVEFILE = PATH + "trained_model.pt"
