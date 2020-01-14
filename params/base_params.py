@@ -9,6 +9,7 @@ class BaseParams(object):
         self.compute_helper_params()
 
     def set_params(self):
+        self.standardize_data = False
         self.model_type = None
         self.log_to_file = True
         self.dtype = torch.float

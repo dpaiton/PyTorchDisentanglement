@@ -11,6 +11,7 @@ from torchvision import datasets, transforms
 import params.param_loader as pl
 import models.model_loader as ml
 import utils.base_utils as utils
+import utils.data_processing as dp
 
 parser = argparse.ArgumentParser()
 parser.add_argument("param_file", help="Path to the parameter file")
@@ -26,21 +27,22 @@ params = pl.load_param_file(param_file)
 
 def load_dataset(params):
     if(params.dataset.lower() == "mnist"):
+        preprocessing_pipeline = [
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.0,), std=(255,)), # rescale to be 0 to 1
+            transforms.Lambda(lambda x: x.permute(1, 2, 0)) # channels last
+            ]
+        if params.standardize_data:
+            preprocessing_pipeline.append(transforms.Lambda(lambda x: dp.standardize(x)[0]))
         # Load dataset
         train_loader = torch.utils.data.DataLoader(
             datasets.MNIST(root='../Datasets/', train=True, download=True,
-            transform=transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=(0.0,), std=(255,)), # rescale to be 0 to 1
-            transforms.Lambda(lambda x: x.permute(1, 2, 0))])), # channels last
+            transform=transforms.Compose(preprocessing_pipeline)),
             batch_size=params.batch_size, shuffle=True, num_workers=0, pin_memory=False)
         val_loader = None
         test_loader = torch.utils.data.DataLoader(
             datasets.MNIST(root='../Datasets/', train=False, download=True,
-            transform=transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=(0.0,), std=(255,)), # rescale to be 0 to 1
-            transforms.Lambda(lambda x: x.permute(1, 2, 0))])), # channels last
+            transform=transforms.Compose(preprocessing_pipeline)),
             batch_size=params.batch_size, shuffle=True, num_workers=0, pin_memory=False)
     else:
         assert False, ("Supported datasets are ['mnist'], not"+dataset_name)
