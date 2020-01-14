@@ -40,6 +40,13 @@ class Logger(object):
             params: [dict] containing parameters values
         """
         out_params = deepcopy(params)
+        if "ensemble_params" in out_params.keys():
+            for sub_idx, sub_params in enumerate(out_params["ensemble_params"]):
+                sub_params.set_params()
+                for key, value in sub_params.__dict__.items():
+                    if key != "rand_state":
+                        out_params[str(sub_idx)+"_"+key] = value
+            del out_params["ensemble_params"]
         if "rand_state" in out_params.keys():
             del out_params["rand_state"]
         js_str = self.js_dumpstring(out_params)

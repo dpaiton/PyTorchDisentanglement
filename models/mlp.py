@@ -24,36 +24,24 @@ class Mlp(BaseModel):
             else:
                 assert False, ("layer_type parameter must be 'fc', not %g"%(layer_type))
             self.dropout.append(nn.Dropout(p=self.params.dropout_rate[layer_index]))
-        #self.fc1 = nn.Linear(
-        #    in_features = self.params.num_pixels,
-        #    out_features = self.params.num_latent,
-        #    bias = True)
-        #self.fc2 = nn.Linear(
-        #    in_features = self.params.num_latent,
-        #    out_features = 10,
-        #    bias = True)
-        #self.dropout = nn.Dropout(p=self.params.dropout_rate)
+
+    def preprocess_data(self, input_tensor):
+        input_tensor = input_tensor.view(-1, self.params.layer_channels[0])
+        return input_tensor
 
     def get_total_loss(self, input_tuple):
         input_tensor, input_label = input_tuple
         pred = self.forward(input_tensor)
         return F.nll_loss(pred, input_label)
 
-    def preprocess_data(self, input_tensor):
-        input_tensor = input_tensor.view(-1, self.params.num_pixels)
-        return input_tensor
-
     def forward(self, x):
-        x = self.preprocess_data(x)
-        #x = self.dropout(F.leaky_relu(self.fc1(x)))
-        #x = F.log_softmax(self.fc2(x), dim=1)
         for dropout, act_func, layer in zip(self.dropout, self.act_funcs, self.layers):
             x = dropout(act_func(layer(x)))
         x = F.log_softmax(x, dim=1)
         return x
     
-    def get_encodings(self, x):
-        return self.forward(self, x)
+    def get_encodings(self, input_tensor):
+        return self.forward(input_tensor)
 
     def generate_update_dict(self, input_data, input_labels=None, batch_step=0):
         update_dict = super(Mlp, self).generate_update_dict(input_data, input_labels, batch_step)

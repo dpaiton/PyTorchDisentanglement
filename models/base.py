@@ -12,6 +12,10 @@ class BaseModel(nn.Module):
         self.params_loaded = False
 
     def setup(self, params, logger=None):
+        """
+        Setup required model components
+        #TODO: log system info, including git commit hash
+        """
         self.load_params(params)
         self.check_params()
         self.make_dirs()
@@ -21,6 +25,7 @@ class BaseModel(nn.Module):
         else:
             self.logger = logger
         self.setup_model()
+        self.setup_optimizer()
 
     def load_params(self, params):
         """
@@ -113,6 +118,31 @@ class BaseModel(nn.Module):
 
     def setup_model(self):
         raise NotImplementedError
+
+    def get_optimizer(self, optimizer_params, trainable_variables):
+        optimizer_name = optimizer_params.optimizer.name
+        if(optimizer_name == "sgd"):
+            optimizer = torch.optim.SGD(
+                trainable_variables,
+                lr=optimizer_params.weight_lr,
+                weight_decay=optimizer_params.weight_decay)
+        elif optimizer_name == "adam":
+            optimizer = torch.optim.Adam(
+                trainable_variables,
+                lr=optimizer_params.weight_lr,
+                weight_decay=optimizer_params.weight_decay)
+        else:
+            assert False, ("optimizer name must be 'sgd' or 'adam', not %s"%(optimizer_name))
+        return optimizer
+
+    def setup_optimizer(self):
+        self.optimizer = self.get_optimizer(
+                optimizer_params=self.params,
+                trainable_variables=self.parameters())
+        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(
+            self.optimizer,
+            milestones=self.params.optimizer.milestones,
+            gamma=self.params.optimizer.lr_decay_rate)
 
     def get_encodings(self):
         raise NotImplementedError
