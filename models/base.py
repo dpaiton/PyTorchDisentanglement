@@ -168,6 +168,10 @@ class BaseModel(nn.Module):
         Generates a dictionary to be logged in the print_update function
         """
         update_dict = dict()
+        for param_name, param_var in self.named_parameters():
+            grad = param_var.grad
+            update_dict[param_name+"_grad_max_mean_min"] = [
+                grad.max().item(), grad.mean().item(), grad.min().item()]
         return update_dict
 
     def generate_plots(self, input_data, input_labels=None):
