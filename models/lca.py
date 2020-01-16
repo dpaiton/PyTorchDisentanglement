@@ -8,7 +8,8 @@ from modules.activations import lca_threshold
 
 class Lca(BaseModel):
     def setup_model(self):
-        self.w = nn.Parameter(torch.randn(self.params.num_pixels, self.params.num_latent),
+        self.w = nn.Parameter(
+            F.normalize(torch.randn(self.params.num_pixels, self.params.num_latent), p=2, dim=0),
             requires_grad=True)
 
     def preprocess_data(self, input_tensor):
@@ -26,7 +27,7 @@ class Lca(BaseModel):
 
     def threshold_units(self, u_in):
         a_out = lca_threshold(u_in, self.params.thresh_type, self.params.rectify_a,
-             self.params.sparse_mult)
+            self.params.sparse_mult)
         return a_out
 
     def step_inference(self, u_in, a_in, b, g, step):
@@ -39,7 +40,7 @@ class Lca(BaseModel):
         lca_b = self.compute_excitatory_current(input_tensor)
         lca_g = self.compute_inhibitory_connectivity()
         u_list = [torch.zeros([input_tensor.shape[0], self.params.num_latent],
-          device=self.params.device)]
+            device=self.params.device)]
         a_list = [self.threshold_units(u_list[0])]
         # TODO: look into redoing this with a register_buffer that gets updated? look up simple RNN code...
         for step in range(self.params.num_steps-1):
