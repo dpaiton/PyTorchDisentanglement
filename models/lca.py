@@ -9,7 +9,9 @@ from modules.activations import lca_threshold
 class Lca(BaseModel):
     def setup_model(self):
         self.w = nn.Parameter(
-            F.normalize(torch.randn(self.params.num_pixels, self.params.num_latent), p=2, dim=0),
+            F.normalize(
+            torch.randn(self.params.num_pixels, self.params.num_latent, device=self.params.device),
+            p=2, dim=0),
             requires_grad=True)
 
     def preprocess_data(self, input_tensor):
@@ -27,7 +29,7 @@ class Lca(BaseModel):
 
     def threshold_units(self, u_in):
         a_out = lca_threshold(u_in, self.params.thresh_type, self.params.rectify_a,
-            self.params.sparse_mult)
+            self.params.sparse_mult, device=self.params.device)
         return a_out
 
     def step_inference(self, u_in, a_in, b, g, step):
@@ -88,13 +90,20 @@ class Lca(BaseModel):
         stat_dict = {
             "epoch":int(epoch),
             "batch_step":batch_step,
-            "train_progress":np.round(batch_step/self.params.num_batches, 3)}
+            "train_progress":np.round(batch_step/self.params.num_batches, 3),
+            "weight_lr":self.scheduler.get_lr()[0]}
         latents = self.get_encodings(input_data)
         recon = self.get_recon_from_latents(latents)
         recon_loss = self.get_recon_loss(input_data, recon).item()
         sparse_loss = self.get_sparse_loss(latents).item()
-        stat_dict["recon_loss"] = recon_loss
-        stat_dict["sparse_loss"] = sparse_loss
-        stat_dict["total_loss"] = recon_loss + sparse_loss
+        stat_dict["loss_recon"] = recon_loss
+        stat_dict["loss_sparse"] = sparse_loss
+        stat_dict["loss_total"] = recon_loss + sparse_loss
+        stat_dict["input_max_mean_min"] = [
+                input_data.max().item(), input_data.mean().item(), input_data.min().item()]
+        stat_dict["recon_max_mean_min"] = [
+                recon.max().item(), recon.mean().item(), recon.min().item()]
+        latent_nnz = torch.sum(latents != 0).item() # TODO: github issue 23907 requests torch.count_nonzero
+        stat_dict["latents_fraction_active"] = latent_nnz / latents.numel()
         update_dict.update(stat_dict)
         return update_dict
