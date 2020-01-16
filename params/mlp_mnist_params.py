@@ -10,7 +10,7 @@ class params(BaseParams):
         super(params, self).set_params()
         self.model_type = "mlp"
         self.model_name = "mlp_mnist"
-        self.version = "0.0"
+        self.version = "0"
         self.dataset = "mnist"
         self.standardize_data = True
         self.num_pixels = 28*28*1

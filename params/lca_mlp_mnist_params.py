@@ -12,7 +12,7 @@ class shared_params(object):
     def __init__(self):
         self.model_type = "ensemble"
         self.model_name = "lca_mlp_mnist"
-        self.version = "0.0"
+        self.version = "0"
         self.dataset = "mnist"
         self.standardize_data = True
         self.num_pixels = 28*28*1

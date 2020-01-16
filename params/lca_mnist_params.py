@@ -10,19 +10,19 @@ class params(BaseParams):
         super(params, self).set_params()
         self.model_type = "lca"
         self.model_name = "lca_mnist"
-        self.version = "0.0"
+        self.version = "0"
         self.dataset = "mnist"
         self.standardize_data = True
         self.num_pixels = 784
         self.batch_size = 50
         self.num_epochs = 50
-        self.weight_lr = 1e-4
         self.weight_decay = 0.
+        self.weight_lr = 0.1
         self.train_logs_per_epoch = 6
         self.optimizer = types.SimpleNamespace()
         self.optimizer.name = "sgd"
-        self.optimizer.lr_annealing_milestone_frac = [0.8] # fraction of num_epochs
-        self.optimizer.lr_decay_rate = 0.1
+        self.optimizer.lr_annealing_milestone_frac = [0.7] # fraction of num_epochs
+        self.optimizer.lr_decay_rate = 0.5
         self.renormalize_weights = True
         self.dt = 0.001
         self.tau = 0.03
@@ -30,7 +30,6 @@ class params(BaseParams):
         self.rectify_a = True
         self.thresh_type = "soft"
         self.sparse_mult = 0.3
-        self.weight_lr = 0.1
         self.num_latent = (28*28)*4
         self.compute_helper_params()
 
