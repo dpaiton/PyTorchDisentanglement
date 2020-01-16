@@ -13,21 +13,30 @@ def activation_picker(activation_function):
       return lca_threshold
     assert False, ("Activation function " + activation_function + " is not supported!")
 
-def lca_threshold(u_in, thresh_type, rectify, sparse_threshold):
+def lca_threshold(u_in, thresh_type, rectify, sparse_threshold, device="cpu"):
+    u_zeros = torch.zeros_like(u_in, device=device)
     if thresh_type == "soft":
         if rectify:
             a_out = torch.where(torch.gt(u_in, sparse_threshold), u_in - sparse_threshold,
-                torch.zeros_like(u_in))
+                u_zeros)
         else:
             a_out = torch.where(torch.ge(u_in, sparse_threshold), u_in - sparse_threshold,
                 torch.where(torch.le(u_in, -sparse_threshold), u_in + sparse_threshold,
-                tf.zeros_like(u_in)))
+                u_zeros))
     elif thresh_type == "hard":
         if rectify:
-            a_out = torch.where(torch.gt(u_in, sparse_threshold), u_in, torch.zeros_like(u_in))
+            a_out = torch.where(
+                torch.gt(u_in, sparse_threshold),
+                u_in,
+                u_zeros)
         else:
-            a_out = torch.where(torch.ge(u_in, sparse_threshold), u_in,
-                torch.where(torch.le(u_in, -sparse_threshold), u_in, torch.zeros_like(u_in)))
+            a_out = torch.where(
+                torch.ge(u_in, sparse_threshold),
+                u_in,
+                torch.where(
+                    torch.le(u_in, -sparse_threshold),
+                    u_in,
+                    u_zeros))
     else:
         assert False, ("Parameter thresh_type must be 'soft' or 'hard', not "+thresh_type)
     return a_out
