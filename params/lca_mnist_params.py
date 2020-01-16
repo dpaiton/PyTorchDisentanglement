@@ -18,12 +18,11 @@ class params(BaseParams):
         self.num_epochs = 50
         self.weight_lr = 1e-4
         self.weight_decay = 0.
-        self.train_logs_per_epoch = 3
+        self.train_logs_per_epoch = 6
         self.optimizer = types.SimpleNamespace()
         self.optimizer.name = "sgd"
         self.optimizer.lr_annealing_milestone_frac = [0.8] # fraction of num_epochs
         self.optimizer.lr_decay_rate = 0.1
-
         self.renormalize_weights = True
         self.dt = 0.001
         self.tau = 0.03

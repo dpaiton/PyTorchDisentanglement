@@ -33,7 +33,8 @@ def load_dataset(params):
             transforms.Lambda(lambda x: x.permute(1, 2, 0)) # channels last
             ]
         if params.standardize_data:
-            preprocessing_pipeline.append(transforms.Lambda(lambda x: dp.standardize(x)[0]))
+            preprocessing_pipeline.append(
+                transforms.Lambda(lambda x: dp.standardize(x, eps=params.eps)[0]))
         # Load dataset
         train_loader = torch.utils.data.DataLoader(
             datasets.MNIST(root='../Datasets/', train=True, download=True,
