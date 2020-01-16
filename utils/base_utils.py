@@ -17,7 +17,7 @@ def train_single_model(model, data, target, num_batches, epoch, batch_idx):
     loss.backward() # backward pass
     model.optimizer.step()
     if(hasattr(model.params, "renormalize_weights") and model.params.renormalize_weights):
-        with torch.no_grad():
+        with torch.no_grad(): # tell autograd to not record this operation
             model.w.div_(torch.norm(model.w, dim=0, keepdim=True))
 
 
@@ -28,7 +28,7 @@ def train_epoch(epoch, model, loader):
     correct = 0
     for batch_idx, (data, target) in enumerate(loader):
         data, target = data.to(model.params.device), target.to(model.params.device)
-        if(model.params.model_type.lower() == "ensemble"):
+        if(model.params.model_type.lower() == "ensemble"): # TODO: Move this to train_model
             inputs = [model.models[0].preprocess_data(data)] # only the first model acts on input
             for sub_model in model.models:
                 train_single_model(sub_model, inputs[-1], target, num_batches, epoch, batch_idx)
@@ -46,6 +46,15 @@ def train_epoch(epoch, model, loader):
         model.scheduler.step(epoch)
 
 
+def test_single_model(model, data, target, epoch):
+    data = model.preprocess_data(data)
+    output = model(data)
+    test_loss = F.nll_loss(output, target, reduction="sum").item()
+    pred = output.max(1, keepdim=True)[1]
+    correct = pred.eq(target.view_as(pred)).sum().item()
+    return (test_loss, correct)
+
+
 def test_epoch(epoch, model, loader):
     with torch.no_grad():
         model.eval()
@@ -53,11 +62,18 @@ def test_epoch(epoch, model, loader):
         correct = 0
         for data, target in loader:
             data, target = data.to(model.params.device), target.to(model.params.device)
-            data = model.preprocess_data(data)
-            output = model(data)
-            test_loss += F.nll_loss(output, target, reduction="sum").item()
-            pred = output.max(1, keepdim=True)[1]
-            correct += pred.eq(target.view_as(pred)).sum().item()
+            if(model.params.model_type.lower() == "ensemble"):
+                inputs = [model.models[0].preprocess_data(data)] # only the first model acts on input
+                for sub_model in model.models:
+                    if(sub_model.params.model_type == "mlp"):
+                        batch_test_loss, batch_correct = test_single_model(
+                            sub_model, inputs[-1], target, epoch)
+                        test_loss += batch_test_loss
+                        correct += batch_correct
+                    inputs.append(sub_model.get_encodings(inputs[-1]))
+            else:
+                inputs = [model.preprocess_data(data)]
+                test_single_model(model, inputs[0], target, epoch)
         test_loss /= len(loader.dataset)
         test_accuracy = 100. * correct / len(loader.dataset)
         stat_dict = {
@@ -68,4 +84,3 @@ def test_epoch(epoch, model, loader):
             "test_accuracy":test_accuracy}
         js_str = model.js_dumpstring(stat_dict)
         model.log_info("<stats>"+js_str+"</stats>")
-
