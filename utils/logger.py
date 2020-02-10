@@ -111,8 +111,13 @@ class Logger(object):
         param_list = []
         for param_dict in params:
             param_obj = type("param_obj", (), {})()
-            for key, val in param_dict.items():
-                  setattr(param_obj, key, val)
+            for key, value in param_dict.items():
+                  setattr(param_obj, key, value)
+            if hasattr(param_obj, "optimizer"): # convert optimizer dict to class
+                optimizer_dict = deepcopy(param_obj.optimizer)
+                param_obj.optimizer = types.SimpleNamespace()
+                for key, value in optimizer_dict.items():
+                    setattr(param_obj.optimizer, key, value)
             param_list.append(param_obj)
         return param_list
 

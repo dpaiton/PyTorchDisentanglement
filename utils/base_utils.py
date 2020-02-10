@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 def module_from_file(module_name, file_name):
     spec = importlib.util.spec_from_file_location(module_name, file_name)
     module = importlib.util.module_from_spec(spec)
@@ -47,7 +48,7 @@ def train_epoch(epoch, model, loader):
 
 
 def test_single_model(model, data, target, epoch):
-    data = model.preprocess_data(data)
+    #data = model.preprocess_data(data)
     output = model(data)
     test_loss = F.nll_loss(output, target, reduction="sum").item()
     pred = output.max(1, keepdim=True)[1]
@@ -73,7 +74,10 @@ def test_epoch(epoch, model, loader):
                     inputs.append(sub_model.get_encodings(inputs[-1]))
             else:
                 inputs = [model.preprocess_data(data)]
-                test_single_model(model, inputs[0], target, epoch)
+                batch_test_loss, batch_correct = test_single_model(
+                    model, inputs[0], target, epoch)
+                test_loss += batch_test_loss
+                correct += batch_correct
         test_loss /= len(loader.dataset)
         test_accuracy = 100. * correct / len(loader.dataset)
         stat_dict = {
