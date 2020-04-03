@@ -9,7 +9,7 @@ class params(BaseParams):
     def set_params(self):
         super(params, self).set_params()
         self.model_type = "mlp"
-        self.model_name = "mlp_mnist"
+        self.model_name = "tmp"
         self.version = "0"
         self.dataset = "mnist"
         self.standardize_data = True
