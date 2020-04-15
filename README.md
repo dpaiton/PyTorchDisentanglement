@@ -1,2 +1,2 @@
-# PyTorchSparseCoding
-Sparse coding models implemented in PyTorch
+# PyTorchDisentanglement
+Sparse coding & other disentanglement models implemented in PyTorch
