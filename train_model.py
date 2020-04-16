@@ -1,13 +1,17 @@
 import os
+import sys
 import argparse
 import time as ti
 
+parent_path = os.path.dirname(os.getcwd())
+if parent_path not in sys.path: sys.path.append(parent_path)
+
 import torch
 
-import params.param_loader as pl
-import models.model_loader as ml
-import utils.run_utils as run_utils
-import utils.dataset_utils as dataset_utils
+import PyTorchDisentanglement.params.param_loader as pl
+import PyTorchDisentanglement.models.model_loader as ml
+import PyTorchDisentanglement.utils.run_utils as run_utils
+import PyTorchDisentanglement.utils.dataset_utils as dataset_utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument("param_file", help="Path to the parameter file")

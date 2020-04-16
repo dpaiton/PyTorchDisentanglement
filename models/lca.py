@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.base import BaseModel
-from modules.activations import lca_threshold
+from PyTorchDisentanglement.models.base import BaseModel
+from PyTorchDisentanglement.modules.activations import lca_threshold
 
 class Lca(BaseModel):
     def setup_model(self):

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.file_utils import Logger
+from PyTorchDisentanglement.utils.file_utils import Logger
 
 class BaseModel(nn.Module):
     def __init__(self):

@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from modules.activations import activation_picker
-from models.base import BaseModel
+from PyTorchDisentanglement.modules.activations import activation_picker
+from PyTorchDisentanglement.models.base import BaseModel
 
 class Mlp(BaseModel):
     def setup_model(self):
