@@ -1,5 +1,5 @@
 import torch
-import numpy as np
+
 
 def reshape_data(data, flatten=None, out_shape=None):
     """
@@ -31,7 +31,6 @@ def reshape_data(data, flatten=None, out_shape=None):
         num_rows: [int32] number of data rows or None if out_shape is specified
         num_cols: [int32] number of data cols or None if out_shape is specified
         num_channels: [int32] number of data channels or None if out_shape is specified
-    #TODO: Original function had data.copy() as outputs - I removed this, but I should test it to make sure that is ok
     """
     orig_shape = data.shape
     orig_ndim = data.dim()
@@ -93,6 +92,43 @@ def reshape_data(data, flatten=None, out_shape=None):
         data = torch.reshape(data, out_shape)
     return (data, orig_shape, num_examples, num_rows, num_cols, num_channels)
 
+
+def check_all_same_shape(tensor_list):
+    """
+    Verify that all tensors in the tensor list have the same shape
+    Args:
+        tensor_list: list of tensors to be checked
+    Returns:
+        raises error if the tensors are not the same shape
+    """
+    first_shape = tensor_list[0].shape
+    for index, tensor in enumerate(tensor_list):
+        if tensor.shape != first_shape:
+            raise ValueError(
+                "Tensor entry %g in input list has shape %g, but should have shape %g"%(
+                index, tensor.shape, first_shape))
+
+
+def flatten_feature_map(feature_map):
+    """
+    Flatten input tensor from [batch, y, x, f] to [batch, y*x*f]
+    Args:
+        feature_map: tensor with shape [batch, y, x, f]
+    Returns:
+        reshaped_map: tensor with  shape [batch, y*x*f]
+    """
+    map_shape = feature_map.get_shape()
+    if(map_shape.ndims == 4):
+        (batch, y, x, f) = map_shape
+        prev_input_features = int(y * x * f)
+        resh_map  = torch.reshape(feature_map, [-1, prev_input_features])
+    elif(map_shape.ndims == 2):
+        resh_map = feature_map
+    else:
+      raise ValueError("Input feature_map has incorrect ndims")
+    return resh_map
+
+
 def standardize(data, eps=None):
   """
   Standardize each image data to have zero mean and unit standard-deviation (z-score)
@@ -102,7 +138,7 @@ def standardize(data, eps=None):
       data: [tensor] normalized data
   """
   if eps is None:
-      eps = 1.0 / np.sqrt(data[0,...].numel())
+      eps = 1.0 / torch.sqrt(data[0,...].numel())
   data, orig_shape = reshape_data(data, flatten=True)[:2] # Adds channel dimension if it's missing
   num_examples = data.shape[0]
   data_axis = tuple(range(data.dim())[1:]) # standardize each example individually

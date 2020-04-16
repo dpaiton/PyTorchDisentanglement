@@ -4,7 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from PyTorchDisentanglement.models.base import BaseModel
+from PyTorchDisentanglement.modules.losses import losses
 from PyTorchDisentanglement.modules.activations import lca_threshold
+
 
 class Lca(BaseModel):
     def setup_model(self):
@@ -63,24 +65,12 @@ class Lca(BaseModel):
         reconstruction = self.get_recon_from_latents(latents)
         return reconstruction
 
-    def get_recon_loss(self, input_tensor, recon):
-        data_reduc_dim = list(range(1, len(recon.shape)))
-        mse = torch.pow(input_tensor - recon, 2.)
-        recon_loss = torch.mean(torch.sum(0.5 * mse, dim=data_reduc_dim, keepdim=False))
-        return recon_loss
-
-    def get_sparse_loss(self, latents):
-        latent_reduc_dim = list(range(1, len(latents.shape)))
-        sparse_loss = self.params.sparse_mult * torch.mean(torch.sum(torch.abs(latents),
-            dim=latent_reduc_dim, keepdim=False))
-        return sparse_loss
-
     def get_total_loss(self, input_tuple):
         input_tensor, input_labels = input_tuple
         latents = self.get_encodings(input_tensor)
         recon = self.get_recon_from_latents(latents)
-        recon_loss = self.get_recon_loss(input_tensor, recon)
-        sparse_loss = self.get_sparse_loss(latents)
+        recon_loss = losses.half_squared_l2(input_tensor, recon)
+        sparse_loss = self.params.sparse_mult * losses.l1_norm(latents)
         total_loss = recon_loss + sparse_loss
         return total_loss
 
@@ -94,8 +84,8 @@ class Lca(BaseModel):
             "weight_lr":self.scheduler.get_lr()[0]}
         latents = self.get_encodings(input_data)
         recon = self.get_recon_from_latents(latents)
-        recon_loss = self.get_recon_loss(input_data, recon).item()
-        sparse_loss = self.get_sparse_loss(latents).item()
+        recon_loss = losses.half_squared_l2(input_data, recon).item()
+        sparse_loss = self.params.sparse_mult * losses.l1_norm(latents).item()
         stat_dict["loss_recon"] = recon_loss
         stat_dict["loss_sparse"] = sparse_loss
         stat_dict["loss_total"] = recon_loss + sparse_loss
