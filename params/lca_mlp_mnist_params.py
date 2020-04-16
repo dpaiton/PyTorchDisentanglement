@@ -8,6 +8,7 @@ from params.base_params import BaseParams
 from params.lca_mnist_params import params as LcaParams
 from params.mlp_mnist_params import params as MlpParams
 
+
 class shared_params(object):
     def __init__(self):
         self.model_type = "ensemble"

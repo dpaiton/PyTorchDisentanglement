@@ -1,4 +1,4 @@
-import utils.base_utils as utils
+import utils.file_utils as file_utils
 
 def load_model(model_type):
     if(model_type.lower() == "mlp"):
@@ -16,7 +16,7 @@ def load_model(model_type):
     else:
         assert False, ("Acceptible model_types are 'mlp' and 'lca', not %s"%(model_type))
 
-    module = utils.module_from_file(module_name, file_name)
+    module = file_utils.module_from_file(module_name, file_name)
     model = getattr(module, module_name)
     return model()
 

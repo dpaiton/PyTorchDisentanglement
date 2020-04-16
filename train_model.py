@@ -6,7 +6,7 @@ import torch
 
 import params.param_loader as pl
 import models.model_loader as ml
-import utils.base_utils as base_utils
+import utils.run_utils as run_utils
 import utils.dataset_utils as dataset_utils
 
 parser = argparse.ArgumentParser()
@@ -30,9 +30,9 @@ model.to(params.device)
 
 # Train model
 for epoch in range(1, model.params.num_epochs+1):
-   base_utils.train_epoch(epoch, model, train_loader)
+   run_utils.train_epoch(epoch, model, train_loader)
    if(model.params.model_type.lower() in ["mlp", "ensemble"]):
-       base_utils.test_epoch(epoch, model, test_loader)
+       run_utils.test_epoch(epoch, model, test_loader)
    print("Completed epoch %g/%g"%(epoch, model.params.num_epochs))
 
 t1 = ti.time()

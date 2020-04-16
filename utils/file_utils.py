@@ -1,11 +1,14 @@
 import re
 import time
 import types
-import numpy as np
-import json as js
 import os
 from copy import deepcopy
+import importlib
+
+import numpy as np
+import json as js
 import torch
+
 
 class Logger(object):
     def __init__(self, filename=None, overwrite=True):
@@ -165,3 +168,10 @@ class CustomEncoder(js.JSONEncoder):
             return obj.__dict__
         else:
             return super(CustomEncoder, self).default(obj)
+
+
+def module_from_file(module_name, file_name):
+    spec = importlib.util.spec_from_file_location(module_name, file_name)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module

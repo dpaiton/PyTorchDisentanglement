@@ -1,15 +1,4 @@
-import importlib
-
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-
-def module_from_file(module_name, file_name):
-    spec = importlib.util.spec_from_file_location(module_name, file_name)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
 
 def train_single_model(model, data, target, num_batches, epoch, batch_idx):
@@ -50,7 +39,7 @@ def train_epoch(epoch, model, loader):
 def test_single_model(model, data, target, epoch):
     #data = model.preprocess_data(data)
     output = model(data)
-    test_loss = F.nll_loss(output, target, reduction="sum").item()
+    test_loss = torch.nn.functional..nll_loss(output, target, reduction="sum").item()
     pred = output.max(1, keepdim=True)[1]
     correct = pred.eq(target.view_as(pred)).sum().item()
     return (test_loss, correct)

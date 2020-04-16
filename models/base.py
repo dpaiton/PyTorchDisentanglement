@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.logger import Logger
+from utils.file_utils import Logger
 
 class BaseModel(nn.Module):
     def __init__(self):
