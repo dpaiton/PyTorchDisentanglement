@@ -16,7 +16,7 @@ class Mlp(BaseModel):
             if layer_type == "fc":
                 layer = nn.Linear(
                     in_features = self.params.layer_channels[layer_index],
-                    out_features = self.params.layer_channels[layer_index+1], 
+                    out_features = self.params.layer_channels[layer_index+1],
                     bias = True)
                 self.register_parameter("fc"+str(layer_index)+"_w", layer.weight)
                 self.register_parameter("fc"+str(layer_index)+"_b", layer.bias)
@@ -39,7 +39,7 @@ class Mlp(BaseModel):
             x = dropout(act_func(layer(x)))
         x = F.log_softmax(x, dim=1)
         return x
-    
+
     def get_encodings(self, input_tensor):
         return self.forward(input_tensor)
 

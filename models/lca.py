@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import PyTorchDisentanglement.modules.losses as losses
 from PyTorchDisentanglement.models.base import BaseModel
-from PyTorchDisentanglement.modules.losses import losses
 from PyTorchDisentanglement.modules.activations import lca_threshold
 
 

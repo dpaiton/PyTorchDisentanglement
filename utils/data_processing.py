@@ -150,3 +150,21 @@ def standardize(data, eps=None):
   if data.shape != orig_shape:
       data = reshape_data(data, out_shape=orig_shape)[0]
   return data, data_mean, data_std
+
+
+def rescale_data_to_one(data):
+  """
+  Rescale input data to be between 0 and 1, per example
+  Inputs:
+    data: [tensor] unnormalized data
+  Outputs:
+    data: [tensor] centered data of shape (n, i, j, k) or (n, l)
+  """
+  data, orig_shape = reshape_data(data, flatten=None)[:2]
+  data_axis = tuple(range(data.ndim)[1:])
+  data_min = torch.min(data, axis=data_axis, keepdims=True)
+  data_max = torch.max(data, axis=data_axis, keepdims=True)
+  data = (data - data_min) / (data_max - data_min + 1e-8)
+  if data.shape != orig_shape:
+    data = reshape_data(data, out_shape=orig_shape)[0]
+  return data, data_min, data_max

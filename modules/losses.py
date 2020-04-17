@@ -13,9 +13,9 @@ def half_squared_l2(x1, x2):
         recon_loss: Tensor representing the squared l2 distance between the inputs, averaged over batch
     """
     dp.check_all_same_shape([x1, x2])
-    reduc_dim = list(range(1, x1.shape)) # sum over reduc_dim, avg over batch
-    squred_error = torch.pow(x1 - x2, 2.)
-    recon_loss = 0.5 * torch.mean(torch.sum(squared_error, dim=reduc_dim, keepdim=False))
+    reduc_dim = list(range(1, len(x1.shape))) # sum over reduc_dim, avg over batch
+    squared_error = torch.pow(x1 - x2, 2.)
+    recon_loss = torch.mean(0.5 * torch.sum(squared_error, dim=reduc_dim, keepdim=False))
     return recon_loss
 
 
@@ -29,7 +29,7 @@ def half_weight_norm_squared(weight_list):
     """
     w_norm_list = []
     for w in weight_list:
-        reduc_dim = list(range(1, w.shape))
+        reduc_dim = list(range(1, len(w.shape)))
         w_norm = torch.sum(torch.pow(1 - torch.sqrt(torch.sum(tf.pow(w, 2.), axis=reduc_dim)), 2.))
         w_norm_list.append(w_norm)
     norm_loss = 0.5 * torch.sum(w_norm_list)

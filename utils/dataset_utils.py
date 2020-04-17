@@ -8,7 +8,6 @@ def load_dataset(params):
     if(params.dataset.lower() == "mnist"):
         preprocessing_pipeline = [
             transforms.ToTensor(),
-            transforms.Normalize(mean=(0.0,), std=(255,)), # rescale to be 0 to 1
             transforms.Lambda(lambda x: x.permute(1, 2, 0)) # channels last
             ]
         if params.standardize_data:
