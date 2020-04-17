@@ -4,7 +4,7 @@ import types
 import numpy as np
 import torch
 
-from params.base_params import BaseParams
+from PyTorchDisentanglement.params.base_params import BaseParams
 
 
 class params(BaseParams):
@@ -14,9 +14,9 @@ class params(BaseParams):
         self.model_name = "lca_mnist"
         self.version = "0"
         self.dataset = "mnist"
-        self.standardize_data = True
+        self.standardize_data = False
         self.num_pixels = 784
-        self.batch_size = 50
+        self.batch_size = 100
         self.num_epochs = 50
         self.weight_decay = 0.
         self.weight_lr = 0.1
@@ -31,8 +31,8 @@ class params(BaseParams):
         self.num_steps = 75
         self.rectify_a = True
         self.thresh_type = "soft"
-        self.sparse_mult = 0.3
-        self.num_latent = (28*28)*4
+        self.sparse_mult = 0.25
+        self.num_latent = 768#self.num_pixels*4
         self.compute_helper_params()
 
     def compute_helper_params(self):
